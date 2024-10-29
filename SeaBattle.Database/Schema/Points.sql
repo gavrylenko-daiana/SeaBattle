@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[Points]
+(
+	PointId INT PRIMARY KEY NOT NULL,
+    X INT NOT NULL,
+    Y INT NOT NULL
+)

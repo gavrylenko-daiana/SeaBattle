@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[ShipTypes]
+(
+	ShipTypeId INT PRIMARY KEY NOT NULL,
+    Type VARCHAR(255) NOT NULL
+)
