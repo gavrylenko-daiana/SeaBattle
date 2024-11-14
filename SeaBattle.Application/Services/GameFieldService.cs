@@ -67,20 +67,20 @@ public class GameFieldService : IGameFieldService
             return Result.Failure<GameField>(ServiceErrors.GameFieldServiceExceptions.FailedCreateGameField);
         }
 
-        foreach (var coordinate in gameField.Coordinates)
-        {
-            var newPointResult = await _pointService.Insert(coordinate.Point);
-
-            if (newPointResult.IsFailure)
-            {
-                return Result.Failure<GameField>(newPointResult.Error);
-            }
-
-            coordinate.PointId = newPointResult.Value.PointId;
-            coordinate.GameFieldId = gameField.GameFieldId;
-
-            await _coordinateService.Insert(coordinate);
-        }
+        // foreach (var coordinate in gameField.Coordinates)
+        // {
+        //     var newPointResult = await _pointService.Insert(coordinate.Point);
+        //
+        //     if (newPointResult.IsFailure)
+        //     {
+        //         return Result.Failure<GameField>(newPointResult.Error);
+        //     }
+        //
+        //     coordinate.PointId = newPointResult.Value.PointId;
+        //     coordinate.GameFieldId = gameField.GameFieldId;
+        //
+        //     await _coordinateService.Insert(coordinate);
+        // }
 
         return Result.Success(gameField);
     }

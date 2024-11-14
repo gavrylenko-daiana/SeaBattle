@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SeaBattle.Domain.Models;
 
@@ -25,5 +26,6 @@ public class AppUser
     [Column("PasswordHash")]
     public string PasswordHash { get; set; }
     
+    [JsonIgnore]
     public List<UserGames> UserGames { get; set; } = new List<UserGames>();
 }

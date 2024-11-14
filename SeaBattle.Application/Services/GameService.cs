@@ -1,4 +1,6 @@
 ﻿using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using SeaBattle.Application.Exceptions;
 using SeaBattle.Application.Interfaces;
 using SeaBattle.Domain.Enums;
@@ -27,7 +29,7 @@ public class GameService : IGameService
 
     public GameService(IRepository<Game> repository, IUnitOfWork unitOfWork, IUserGameService userGameService,
         IAppUserService userService, IGameInvitationService invitationService, IShipService shipService, ICoordinateService coordinateService,
-        IShipCoordinateService shipCoordinateService, IGameFieldService gameFieldService)
+        IShipCoordinateService shipCoordinateService, IGameFieldService gameFieldService, ICoordinateTypeService coordinateTypeService)
     {
         _unitOfWork = unitOfWork;
         _userGameService = userGameService;
@@ -37,12 +39,16 @@ public class GameService : IGameService
         _coordinateService = coordinateService;
         _shipCoordinateService = shipCoordinateService;
         _gameFieldService = gameFieldService;
+        _coordinateTypeService = coordinateTypeService;
         _repository = repository;
     }
 
     public async Task<Result<List<Game>>> GetAll(Expression<Func<Game, bool>> filter = null!, Expression<Func<IQueryable<Game>, IOrderedQueryable<Game>>> orderBy = null!, int pageNumber = 1, int pageSize = 1000)
     {
-        var games = await _repository.GetAll(filter, orderBy);
+        Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
+            .Include(g => g.GameUsers);
+
+        var games = await _repository.GetAll(filter, orderBy, include);
 
         var paginatedGames = games.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
@@ -53,7 +59,17 @@ public class GameService : IGameService
     
     public async Task<Result<Game>> GetById(int id)
     {
-        var game = await _repository.GetById(id);
+        Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
+            .Include(g => g.GameUsers)
+                .ThenInclude(ug => ug.GameField)
+                .ThenInclude(gf => gf.Coordinates)
+                .ThenInclude(c => c.Point)
+            .Include(g => g.GameUsers)
+                .ThenInclude(ug => ug.GameField)
+                .ThenInclude(gf => gf.Coordinates)
+                .ThenInclude(c => c.CoordinateType);
+
+        var game = await _repository.GetById(id, include);
 
         return game is null ? Result.Failure<Game>(ServiceErrors.GameServiceExceptions.NonExistentGame) : Result.Success(game);
     }
@@ -71,8 +87,10 @@ public class GameService : IGameService
         
         await _repository.Insert(game);
 
+        var save = await _unitOfWork.SaveChanges();
+        
         var userGameResult = await _userGameService.Insert(game, currentUserResult.Value);
-
+        
         if (userGameResult.IsFailure)
         {
             return Result.Failure<Game>(userGameResult.Error);

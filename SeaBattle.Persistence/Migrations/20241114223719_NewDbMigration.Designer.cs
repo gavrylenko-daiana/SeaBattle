@@ -11,8 +11,8 @@ using SeaBattle.Persistence;
 namespace SeaBattle.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20241023210148_SeedDataForShipAndCoordinateTypes")]
-    partial class SeedDataForShipAndCoordinateTypes
+    [Migration("20241114223719_NewDbMigration")]
+    partial class NewDbMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -261,8 +261,11 @@ namespace SeaBattle.Persistence.Migrations
             modelBuilder.Entity("SeaBattle.Domain.Models.Point", b =>
                 {
                     b.Property<int>("PointId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("PointId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PointId"));
 
                     b.Property<int>("X")
                         .HasColumnType("int")

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using SeaBattle.Domain.Enums;
 using SeaBattle.Domain.Helpers;
 
@@ -30,6 +31,7 @@ public class UserGames
     public int GameId { get; set; }
     
     [ForeignKey("GameId")]
+    [JsonIgnore]
     public Game Game { get; set; }
     
     [Column("AppUserId")]

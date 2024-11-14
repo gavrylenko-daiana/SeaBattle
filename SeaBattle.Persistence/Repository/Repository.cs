@@ -1,7 +1,9 @@
 using System.Linq.Expressions;
 using SeaBattle.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using SeaBattle.Application.Interfaces;
+using SeaBattle.Domain.Models;
 
 namespace SeaBattle.Persistence.Repository;
 
@@ -58,11 +60,22 @@ public class Repository<T> : IRepository<T> where T : class
         }
     }
 
-    public async Task<T> GetById(int id)
+    public async Task<T> GetById(int id, Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null!)
     {
         try
         {
-            return await _dbSet.FindAsync(id);
+            if (include == null)
+            {
+                return await _dbSet.FindAsync(id);
+            }
+            
+            var primaryKey = _context.Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties[0].Name;
+
+            IQueryable<T> query = include(_dbSet);
+
+            query = query.Where(e => EF.Property<int>(e, primaryKey) == id);
+
+            return await query.FirstOrDefaultAsync();
         }
         catch (Exception ex)
         {
@@ -71,8 +84,9 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     public virtual async Task<List<T>> GetAll(
-        Expression<Func<T, bool>> filter = null,
-        Expression<Func<IQueryable<T>, IOrderedQueryable<T>>> orderBy = null)
+        Expression<Func<T, bool>> filter = null!,
+        Expression<Func<IQueryable<T>, IOrderedQueryable<T>>> orderBy = null!,
+        Func<IQueryable<T>, IIncludableQueryable<T, object>> include = null!)
     {
         try
         {
@@ -82,13 +96,20 @@ public class Repository<T> : IRepository<T> where T : class
             {
                 query = query.Where(filter);
             }
+            
+            if (include != null)
+            {
+                query = include(query);
+            }
 
             if (orderBy != null)
             {
                 return await orderBy.Compile()(query).ToListAsync();
             } 
             
-            return await query.ToListAsync();
+            // ToDo: remove after tests
+            var res = await query.ToListAsync();
+            return res;
         }
         catch (Exception ex)
         {

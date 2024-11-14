@@ -17,7 +17,7 @@ public class AppContextFactory : IDesignTimeDbContextFactory<ApplicationContext>
     {
         var builder = new ConfigurationBuilder();
         builder.SetBasePath(Directory.GetCurrentDirectory());
-        builder.AddJsonFile("/Users/dayanagavrylenko/Downloads/daiana-gavrylenko-feature-unit-testing/SeaBattle.API/appsettings.Development.json");
+        builder.AddJsonFile("/Users/dayanagavrylenko/КПІ/5SEMESTER/SeaBattle/SeaBattle.API/appsettings.Development.json");
         var config = builder.Build();
         var connectionString = config.GetConnectionString("DefaultConnection");
 

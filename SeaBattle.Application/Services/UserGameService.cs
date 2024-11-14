@@ -11,10 +11,12 @@ public class UserGameService : IUserGameService
 {
     private readonly IRepository<UserGames> _repository;
     private readonly IGameFieldService _gameFieldService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserGameService(IRepository<UserGames> repository, IGameFieldService gameFieldService)
+    public UserGameService(IRepository<UserGames> repository, IGameFieldService gameFieldService, IUnitOfWork unitOfWork)
     {
         _gameFieldService = gameFieldService;
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -28,7 +30,9 @@ public class UserGameService : IUserGameService
         }
 
         var userGame = new UserGames(game, currentUser, newGameFieldResult.Value);
-        await _repository.Insert(new UserGames(game, currentUser, newGameFieldResult.Value));
+        await _repository.Insert(userGame);
+
+        await _unitOfWork.SaveChanges();
 
         return Result.Success(userGame);
     }

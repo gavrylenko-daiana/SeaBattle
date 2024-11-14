@@ -258,8 +258,11 @@ namespace SeaBattle.Persistence.Migrations
             modelBuilder.Entity("SeaBattle.Domain.Models.Point", b =>
                 {
                     b.Property<int>("PointId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasColumnName("PointId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PointId"));
 
                     b.Property<int>("X")
                         .HasColumnType("int")

@@ -7,7 +7,7 @@
 namespace SeaBattle.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class SeedDataForShipAndCoordinateTypes : Migration
+    public partial class NewDbMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -57,7 +57,8 @@ namespace SeaBattle.Persistence.Migrations
                 name: "Points",
                 columns: table => new
                 {
-                    PointId = table.Column<int>(type: "int", nullable: false),
+                    PointId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     X = table.Column<int>(type: "int", nullable: false),
                     Y = table.Column<int>(type: "int", nullable: false)
                 },

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using SeaBattle.Domain.Enums;
 using SeaBattle.Domain.Exceptions;
 using SeaBattle.Domain.Helpers;
@@ -43,6 +44,7 @@ public record Coordinate
     [Column("CoordinateTypeId")]
     public int CoordinateTypeId { get; private set; }
     
+    [JsonIgnore]
     [ForeignKey("GameFieldId")]
     public GameField GameField { get; private set; }
     

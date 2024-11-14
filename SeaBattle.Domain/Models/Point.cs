@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SeaBattle.Domain.Models;
 
+// [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+// [DatabaseGeneratedAttribute(DatabaseGeneratedOption.Identity)]
 [Table("Points")]
 public record Point
 {
