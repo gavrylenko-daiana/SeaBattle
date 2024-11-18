@@ -46,7 +46,8 @@ public class GameService : IGameService
     public async Task<Result<List<Game>>> GetAll(Expression<Func<Game, bool>> filter = null!, Expression<Func<IQueryable<Game>, IOrderedQueryable<Game>>> orderBy = null!, int pageNumber = 1, int pageSize = 1000)
     {
         Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
-            .Include(g => g.GameUsers);
+            .Include(g => g.GameUsers)
+            .ThenInclude(gu => gu.AppUser);
 
         var games = await _repository.GetAll(filter, orderBy, include);
 
@@ -67,7 +68,12 @@ public class GameService : IGameService
             .Include(g => g.GameUsers)
                 .ThenInclude(ug => ug.GameField)
                 .ThenInclude(gf => gf.Coordinates)
-                .ThenInclude(c => c.CoordinateType);
+                .ThenInclude(c => c.CoordinateType)
+            .Include(g => g.GameUsers)
+                .ThenInclude(ug => ug.GameField)
+                .ThenInclude(gf => gf.Coordinates)
+                .ThenInclude(c => c.ShipCoordinates)
+                .ThenInclude(sc => sc.Ship);
 
         var game = await _repository.GetById(id, include);
 
@@ -251,6 +257,8 @@ public class GameService : IGameService
         {
             return Result.Failure<Game>(getShipResult.Error);
         }
+        
+        await _unitOfWork.SaveChanges();
 
         var getCoordinateResult = await _coordinateService.GetById(shipDto.CoordinateId);
 
@@ -290,7 +298,22 @@ public class GameService : IGameService
 
     public async Task<Result<Game>> UpdateUserStatusOnReady(int gameId, int userId)
     {
-        var game = await _repository.GetById(gameId);
+        Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
+            .Include(g => g.GameUsers)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.Point)
+            .Include(g => g.GameUsers)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.CoordinateType)
+            .Include(g => g.GameUsers)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.ShipCoordinates)
+            .ThenInclude(sc => sc.Ship);
+        
+        var game = await _repository.GetById(gameId, include);
 
         if (game is null)
         {
@@ -340,8 +363,8 @@ public class GameService : IGameService
         {
             if (await _shipCoordinateService.AreShipCoordinatesHits(coordinate))
             {
-                var destroyedTypeResult =
-                    await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Destroyed");
+                var destroyedTypeResult = await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Destroyed");
+                
                 if (destroyedTypeResult.IsFailure)
                 {
                     return Result.Failure<Coordinate>(ServiceErrors.CoordinateTypeServiceExceptions.CoordinateTypeNotFound);
@@ -383,7 +406,11 @@ public class GameService : IGameService
 
     public async Task<Result> UpdatePlayerTurn(int gameId, int coordinateId, int userId)
     {
-        var game = await _repository.GetById(gameId);
+        Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
+            .Include(g => g.GameUsers)
+            .ThenInclude(gu => gu.AppUser);
+        
+        var game = await _repository.GetById(gameId, include);
 
         if (game is null)
         {

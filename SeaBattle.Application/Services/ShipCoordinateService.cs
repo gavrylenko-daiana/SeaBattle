@@ -1,4 +1,6 @@
-﻿using SeaBattle.Application.Exceptions;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using SeaBattle.Application.Exceptions;
 using SeaBattle.Application.Interfaces;
 using SeaBattle.Domain.Interfaces;
 using SeaBattle.Domain.Models;
@@ -140,7 +142,13 @@ public class ShipCoordinateService : IShipCoordinateService
             return Result.Failure<List<ShipCoordinate>>(ServiceErrors.ShipServiceExceptions.NonExistentShip);
         }
 
-        var allShipCoordinates = (await _repository.GetAll()).Where(shc => shc.ShipId == ship.ShipId).ToList();
+        Func<IQueryable<ShipCoordinate>, IIncludableQueryable<ShipCoordinate, object>> include = query => query
+            .Include(sc => sc.Coordinate)
+                .ThenInclude(c => c.Point)
+            .Include(sc => sc.Coordinate)
+                .ThenInclude(c => c.CoordinateType);
+
+        var allShipCoordinates = (await _repository.GetAll(include: include)).Where(shc => shc.ShipId == ship.ShipId).ToList();
 
         return Result.Success(allShipCoordinates);
     }

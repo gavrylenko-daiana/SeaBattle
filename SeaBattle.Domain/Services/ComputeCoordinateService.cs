@@ -30,7 +30,7 @@ public class ComputeCoordinateService : IComputeCoordinateService
         return Result.Success(allAdjacentCoordinates.Distinct().ToList());
     }
     
-    public Coordinate GetNextCoordinate(Coordinate coordinate, Direction direction, GameField gameField, int shipSize = 1)
+    public Coordinate? GetNextCoordinate(Coordinate coordinate, Direction direction, GameField gameField, int shipSize = 1)
     {
         var nextCoordinate = direction switch
         {
@@ -57,9 +57,9 @@ public class ComputeCoordinateService : IComputeCoordinateService
             
             if (checkDirectionFirstCoordinate || checkDirectionLastCoordinate || checkDirectionOtherCoordinates)
             {
-                Coordinate adjacent = GetNextCoordinate(coordinate, direction, gameField);
+                Coordinate? adjacent = GetNextCoordinate(coordinate, direction, gameField);
 
-                if (_validationService.IsValidPoint(adjacent.Point))
+                if (adjacent is not null && _validationService.IsValidPoint(adjacent.Point))
                 {
                     adjacentCoordinates.Add(adjacent);
                 }
@@ -84,22 +84,22 @@ public class ComputeCoordinateService : IComputeCoordinateService
         var leftUp = gameField.GetCoordinateOnField(new Point(AdjustCoordinate(coordinate.Point.X, -1), AdjustCoordinate(coordinate.Point.Y, 1)));
         var rightUp = gameField.GetCoordinateOnField(new Point(AdjustCoordinate(coordinate.Point.X, 1), AdjustCoordinate(coordinate.Point.Y, 1)));
 
-        if (_validationService.IsValidPoint(leftDown.Point))
+        if (leftDown is not null && _validationService.IsValidPoint(leftDown.Point))
         {
             coordinates.Add(leftDown);
         }
 
-        if (_validationService.IsValidPoint(leftUp.Point))
+        if (leftUp is not null && _validationService.IsValidPoint(leftUp.Point))
         {
             coordinates.Add(leftUp);
         }
 
-        if (_validationService.IsValidPoint(rightDown.Point))
+        if (rightDown is not null && _validationService.IsValidPoint(rightDown.Point))
         {
             coordinates.Add(rightDown);
         }
 
-        if (_validationService.IsValidPoint(rightUp.Point))
+        if (rightUp is not null && _validationService.IsValidPoint(rightUp.Point))
         {
             coordinates.Add(rightUp);
         }

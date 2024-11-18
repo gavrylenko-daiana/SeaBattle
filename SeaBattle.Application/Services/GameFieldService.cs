@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SeaBattle.Application.Exceptions;
 using SeaBattle.Application.Interfaces;
 using SeaBattle.Domain.Enums;
@@ -94,7 +95,10 @@ public class GameFieldService : IGameFieldService
 
     public async Task<Result<GameField>> GetById(int id)
     {
-        var gameField = await _repository.GetById(id);
+        var gameField = await _repository.GetById(
+            id,
+            query => query.Include(gf => gf.Coordinates).ThenInclude(c => c.Point)
+            );
 
         return gameField is null ? Result.Failure<GameField>(ServiceErrors.GameFieldServiceExceptions.NonExistentGameField) : Result.Success(gameField);
     }

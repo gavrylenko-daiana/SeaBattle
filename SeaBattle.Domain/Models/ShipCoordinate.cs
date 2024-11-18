@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SeaBattle.Domain.Models;
 
@@ -20,6 +21,7 @@ public class ShipCoordinate
     [Column("ShipCoordinateId")]
     public int ShipCoordinateId { get; private set; }
     
+    [JsonIgnore]
     [ForeignKey("CoordinateId")]
     public Coordinate Coordinate { get; private set; }
     

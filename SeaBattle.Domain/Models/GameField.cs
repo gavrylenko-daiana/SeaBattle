@@ -85,14 +85,14 @@ public class GameField
         }
     }
 
-    public Coordinate GetCoordinateOnField(Point point)
+    public Coordinate? GetCoordinateOnField(Point point)
     {
-        Coordinate getCoordinate = Coordinates.FirstOrDefault(c => c.Point.X == point.X && c.Point.Y == point.Y);
+        Coordinate? getCoordinate = Coordinates.FirstOrDefault(c => c.Point.X == point.X && c.Point.Y == point.Y);
 
-        if (getCoordinate is null)
-        {
-            throw new Exception("Coordinate not found on the game field.");
-        }
+        // if (getCoordinate is null)
+        // {
+        //     throw new Exception("Coordinate not found on the game field.");
+        // }
 
         return getCoordinate;
     }

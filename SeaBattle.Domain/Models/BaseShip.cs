@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using SeaBattle.Domain.Enums;
 using SeaBattle.Domain.Exceptions;
 using SeaBattle.Domain.Helpers;
@@ -23,6 +24,7 @@ public abstract class BaseShip
 
     [Key]
     [Column("ShipId")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ShipId { get; set; }
 
     [Column("Range")]
@@ -48,6 +50,7 @@ public abstract class BaseShip
     [Column("Speed")]
     public int Speed { get; private set; }
     
+    [JsonIgnore]
     public List<ShipCoordinate> ShipCoordinates { get; private set; } = new();
 
     public static Result<BaseShip> CreateShip(int speed, int size, Direction direction, ShipType shipType)

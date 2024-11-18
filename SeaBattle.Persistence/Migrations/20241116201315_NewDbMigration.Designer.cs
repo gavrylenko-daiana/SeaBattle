@@ -11,7 +11,7 @@ using SeaBattle.Persistence;
 namespace SeaBattle.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20241114223719_NewDbMigration")]
+    [Migration("20241116201315_NewDbMigration")]
     partial class NewDbMigration
     {
         /// <inheritdoc />
