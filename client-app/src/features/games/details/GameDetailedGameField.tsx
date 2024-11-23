@@ -39,7 +39,6 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
     };
 
     useEffect(() => {
-        debugger;
         const currentPlayerTurn = game.gameUsers.filter(gu => gu.isPlayerTurn).some(gu => gu.appUserId === userId);
         const allShipsDestroyedFirstGameField = gameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length > 0).every(coordinate => coordinate.coordinateType.type === "Destroyed");
         const allShipsDestroyedSecondGameField = secondGameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length > 0).every(coordinate => coordinate.coordinateType.type === "Destroyed");

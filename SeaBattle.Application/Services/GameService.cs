@@ -73,7 +73,9 @@ public class GameService : IGameService
                 .ThenInclude(ug => ug.GameField)
                 .ThenInclude(gf => gf.Coordinates)
                 .ThenInclude(c => c.ShipCoordinates)
-                .ThenInclude(sc => sc.Ship);
+                .ThenInclude(sc => sc.Ship)
+            .Include(g => g.GameUsers)
+                .ThenInclude(gu => gu.AppUser);
 
         var game = await _repository.GetById(id, include);
 

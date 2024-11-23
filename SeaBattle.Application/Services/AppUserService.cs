@@ -114,4 +114,20 @@ public class AppUserService : IAppUserService
 
         return user;
     }
+
+    public async Task<Result> UpdateUser(AppUser user)
+    {
+        try
+        {
+            await _repository.Update(user);
+            var saveResult = await _unitOfWork.SaveChanges();
+            return saveResult 
+                ? Result.Success() 
+                : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        }
+        catch (Exception ex)
+        {
+            return Result.Failure<AppUser>(ServiceErrors.AppUserServiceExceptions.NonExistentUser);
+        }
+    }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SeaBattle.API.Hubs.Interfaces;
 using SeaBattle.Application.Interfaces;
+using SeaBattle.Domain.Helpers;
 using SeaBattle.Domain.Models;
 using SeaBattle.Domain.Models.Dto;
 
@@ -14,11 +15,15 @@ public class GameController : BaseApiController
 {
     private readonly IGameService _gameService;
     private readonly IHubService _playHubService;
+    private readonly IAppUserService _userService;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public GameController(IGameService gameService, IHubService playHubService)
+    public GameController(IGameService gameService, IHubService playHubService, IAppUserService userService, IUnitOfWork unitOfWork)
     {
         _gameService = gameService;
         _playHubService = playHubService;
+        _userService = userService;
+        _unitOfWork = unitOfWork;
     }
 
     [HttpGet]
@@ -167,6 +172,50 @@ public class GameController : BaseApiController
         if (result.IsFailure)
         {
             return NotFound();
+        }
+        
+        // Check if the game has ended
+        var gameResult = await _gameService.GetById(gameId);
+        if (gameResult.IsFailure)
+        {
+            return NotFound();
+        }
+
+        var game = gameResult.Value;
+        var firstPlayerField = game.GameUsers[0].GameField;
+        var secondPlayerField = game.GameUsers[1].GameField;
+
+        bool allShipsDestroyedFirstPlayer = firstPlayerField.Coordinates
+            .Where(c => c.ShipCoordinates.Any())
+            .All(c => c.CoordinateType.Type == "Destroyed");
+
+        bool allShipsDestroyedSecondPlayer = secondPlayerField.Coordinates
+            .Where(c => c.ShipCoordinates.Any())
+            .All(c => c.CoordinateType.Type == "Destroyed");
+
+        if (allShipsDestroyedFirstPlayer || allShipsDestroyedSecondPlayer)
+        {
+            // Determine winner and loser
+            bool firstPlayerWon = allShipsDestroyedSecondPlayer;
+            var firstPlayer = game.GameUsers[0].AppUser;
+            var secondPlayer = game.GameUsers[1].AppUser;
+
+            // Calculate new ratings
+            var (newFirstPlayerRating, newSecondPlayerRating) = EloRatingCalculator.CalculateElo(
+                firstPlayer.Rating, secondPlayer.Rating, firstPlayerWon);
+
+            // Update player ratings
+            firstPlayer.Rating = newFirstPlayerRating;
+            secondPlayer.Rating = newSecondPlayerRating;
+
+            // Save updates
+            var firstPlayerUpdateResult = await _userService.UpdateUser(firstPlayer);
+            var secondPlayerUpdateResult = await _userService.UpdateUser(secondPlayer);
+
+            if (firstPlayerUpdateResult.IsFailure || secondPlayerUpdateResult.IsFailure)
+            {
+                return StatusCode(500, "Failed to update user ratings.");
+            }
         }
 
         await _playHubService.CoordinateUpdated(gameId);

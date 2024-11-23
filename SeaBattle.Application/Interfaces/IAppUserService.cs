@@ -12,4 +12,5 @@ public interface IAppUserService
     Task<Result<AppUser>> CreateUser(RegisterDto registerDto);
     Task<Result<List<AppUser>>> GetAllUsers(int pageNumber = 1, int pageSize = 1000);
     UserDto GetUserDto(AppUser appUser);
+    Task<Result> UpdateUser(AppUser user);
 }
