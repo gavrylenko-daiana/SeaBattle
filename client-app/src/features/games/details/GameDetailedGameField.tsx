@@ -39,6 +39,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
     };
 
     useEffect(() => {
+        debugger;
         const currentPlayerTurn = game.gameUsers.filter(gu => gu.isPlayerTurn).some(gu => gu.appUserId === userId);
         const allShipsDestroyedFirstGameField = gameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length > 0).every(coordinate => coordinate.coordinateType.type === "Destroyed");
         const allShipsDestroyedSecondGameField = secondGameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length > 0).every(coordinate => coordinate.coordinateType.type === "Destroyed");
@@ -51,7 +52,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
         }
     }, [game.gameUsers, userId]);
 
-    const handleCoordinateClick = (coordinate: Coordinate) => {
+    const handleCoordinateClick = async (coordinate: Coordinate) => {
         const allShipsDestroyedFirstGameField = gameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length === 10).every(coordinate => coordinate.coordinateType.type === "Destroyed");
         const allShipsDestroyedSecondGameField = secondGameField?.coordinates.filter(coordinate => coordinate.shipCoordinates.length === 10).every(coordinate => coordinate.coordinateType.type === "Destroyed");
 
@@ -72,8 +73,8 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
         }
 
         if (!isPreparation && !isVisible && currentPlayerTurn) {
-            gameStore.updateCoordinateType(game.gameId, coordinate.coordinateId);
-            gameStore.updateTurn(game.gameId, coordinate.coordinateId);
+            await gameStore.updateCoordinateType(game.gameId, coordinate.coordinateId);
+            await gameStore.updateTurn(game.gameId, coordinate.coordinateId);
         }
     };
 
@@ -91,6 +92,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
     };
 
     const getCoordinateShipDisplay = (coordinate: Coordinate, shipDirection: number, shipSize: number) => {
+        // debugger;
         if (coordinate?.coordinateType.type === "Filled" && isVisible || (coordinate.coordinateType.type === 'Hit' && isPreparation && isVisible || coordinate.coordinateType.type === "Destroyed")) {
             type ShipImages = {
                 [key: string]: string;
@@ -146,6 +148,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
                 if (x === 0) {
                     continue;
                 }
+                // debugger;
                 const coordinate = gameField.coordinates.find(c => c.point.x === x && c.point.y === y)!;
                 const isShipCoordinate = gameField.coordinates.some(c => c.shipCoordinates.some(sc => sc.coordinateId === coordinate.coordinateId));
                 const shipCoordinate = coordinate.shipCoordinates.filter(sc => sc.coordinateId === coordinate.coordinateId)[0];

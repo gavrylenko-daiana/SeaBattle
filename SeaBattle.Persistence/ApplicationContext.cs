@@ -27,6 +27,10 @@ public class ApplicationContext : DbContext
         modelBuilder.Entity<AppUser>()
             .Property(u => u.AppUserId)
             .ValueGeneratedOnAdd();
+
+        modelBuilder.Entity<AppUser>()
+            .Property(u => u.Rating)
+            .HasDefaultValue(1000);
     
         modelBuilder.Entity<Coordinate>()
             .Property(c => c.CoordinateId)

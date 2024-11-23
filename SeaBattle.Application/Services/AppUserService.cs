@@ -43,7 +43,8 @@ public class AppUserService : IAppUserService
             LastName = registerDto.LastName,
             UserName = registerDto.UserName,
             Email = registerDto.Email,
-            PasswordHash = hashedPassword
+            PasswordHash = hashedPassword,
+            Rating = 1000 // Set initial rating
         };
 
         await _repository.Insert(user);
@@ -107,6 +108,7 @@ public class AppUserService : IAppUserService
             UserName = appUser.UserName,
             Email = appUser.Email,
             Token = _jwtTokenService.GenerateJwtToken(appUser.Email, appUser.AppUserId),
+            Rating = appUser.Rating,
             UserGames = appUser.UserGames
         };
 

@@ -34,6 +34,7 @@ export default observer(function ShipForm({onCancel, size, coordinateId, gameId}
     })
 
     function handleFormSubmit(ship: ShipFormValues) {
+        // debugger;
         addShipToField(ship).then(() => navigate(`/game/${id}`))
         gameStore.clearSelectedShipSize();
         modalStore.closeModal();

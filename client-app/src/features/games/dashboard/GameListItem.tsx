@@ -2,7 +2,7 @@ import {Link, NavLink} from "react-router-dom";
 import {Item, Button, Segment} from "semantic-ui-react";
 import {Game} from "../../../app/models/game.ts";
 import {useStore} from "../../../app/stores/store.ts";
-import InviteUsers from "./InviteUsers.tsx";
+// import InviteUsers from "./InviteUsers.tsx";
 import {observer} from "mobx-react-lite";
 import {useEffect, useState} from "react";
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const GameListItem = observer(({game}: Props) => {
-    const {userStore, gameStore, modalStore, invitationStore} = useStore();
+    const {userStore, gameStore, invitationStore} = useStore();
     const currentUserId = userStore.user!.appUserId;
     const isCreator = currentUserId === game.creatorId;
     const isParticipant = game.gameUsers.some(gameUser => gameUser.appUserId === currentUserId);
@@ -32,16 +32,19 @@ const GameListItem = observer(({game}: Props) => {
         loadUsers().then();
     }, [invitationStore]);
 
-    const handleInviteClick = () => {
-        const content = (
-            <InviteUsers
-                key={game.gameId}
-                game={game}
-                onCancel={() => modalStore.closeModal()}
-            />
-        );
-        modalStore.openModal(content);
-    };
+    // const handleInviteClick = () => {
+    //     const content = (
+    //         <InviteUsers
+    //             key={game.gameId}
+    //             game={game}
+    //             onCancel={() => modalStore.closeModal()}
+    //         />
+    //     );
+    //     modalStore.openModal(content);
+    // };
+
+    console.log(game.gameUsers.filter(g => g.gameId), currentUserId);
+    console.log(isParticipant, isTwoPlayerInGame, isCreator);
 
     return (
         <Segment.Group style={{height: '170px'}}>
@@ -52,7 +55,7 @@ const GameListItem = observer(({game}: Props) => {
                             <Item.Header>{game.name}</Item.Header>
                         </Item.Content>
                         <Item.Content>
-                            {isParticipant && isTwoPlayerInGame && (
+                            {isParticipant && (isTwoPlayerInGame || isCreator) && (
                                 <Button
                                     as={Link}
                                     to={`/game/${game.gameId}`}
@@ -92,14 +95,14 @@ const GameListItem = observer(({game}: Props) => {
                                         floated='right'
                                         content='Delete'
                                     />
-                                    {game.progress === 0 &&
-                                    <Button
-                                        onClick={handleInviteClick}
-                                        color='blue'
-                                        floated='right'
-                                        content='Invite'
-                                    />
-                                    }
+                                    {/*{game.progress === 0 &&*/}
+                                    {/*<Button*/}
+                                    {/*    onClick={handleInviteClick}*/}
+                                    {/*    color='blue'*/}
+                                    {/*    floated='right'*/}
+                                    {/*    content='Invite'*/}
+                                    {/*/>*/}
+                                    {/*}*/}
                                 </>
                             )}
                         </Item.Content>

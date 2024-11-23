@@ -26,6 +26,9 @@ public class AppUser
     [Column("PasswordHash")]
     public string PasswordHash { get; set; }
     
+    [Column("Rating")]
+    public int Rating { get; set; } = 1000; // Default initial rating
+    
     [JsonIgnore]
     public List<UserGames> UserGames { get; set; } = new List<UserGames>();
 }

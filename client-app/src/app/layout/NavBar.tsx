@@ -19,11 +19,16 @@ export default observer(function NavBar() {
                 </Menu.Item>
                 <Menu.Item position='right'>
                     {user && (
-                        <Dropdown pointing='top left' text={user?.userName}>
-                            <Dropdown.Menu>
-                                <Dropdown.Item onClick={logout} text='Logout' icon='power'/>
-                            </Dropdown.Menu>
-                        </Dropdown>
+                        <>
+                            <Menu.Item>
+                                {user && (<>Rating: {user?.rating}</>)}
+                            </Menu.Item>
+                            <Dropdown pointing='top left' text={user?.userName}>
+                                <Dropdown.Menu>
+                                    <Dropdown.Item onClick={logout} text='Logout' icon='power'/>
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </>
                     )}
                 </Menu.Item>
             </Container>
