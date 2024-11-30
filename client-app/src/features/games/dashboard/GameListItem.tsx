@@ -55,13 +55,22 @@ const GameListItem = observer(({game}: Props) => {
                             <Item.Header>{game.name}</Item.Header>
                         </Item.Content>
                         <Item.Content>
-                            {isParticipant && (isTwoPlayerInGame || isCreator) && (
+                            {isParticipant && isTwoPlayerInGame && (
                                 <Button
                                     as={Link}
                                     to={`/game/${game.gameId}`}
                                     color='blue'
                                     floated='right'
                                     content='Play'
+                                />
+                            )}
+                            {isParticipant && !isTwoPlayerInGame && isCreator && (
+                                <Button
+                                    onClick={() => gameStore.findOpponent(game.gameId)}
+                                    loading={gameStore.findOpponentLoadingGameIds.includes(game.gameId)}
+                                    color='green'
+                                    floated='right'
+                                    content='Find Opponent'
                                 />
                             )}
                             {!isParticipant && isInvitedUser && (

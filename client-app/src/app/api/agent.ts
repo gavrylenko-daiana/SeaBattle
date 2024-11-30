@@ -59,7 +59,8 @@ const Games = {
     addShipToField: (ship: ShipFormValues) => requests.put<void>(`/game/add/${ship.gameId}`, ship),
     setPlayerStatusGameAsReady: (id: number) => requests.patch<void>(`/game/ready/${id}`),
     updateCoordinateType: (gameId: number, coordinateId: number) => requests.put<void>(`/game/type/${coordinateId}/${gameId}`),
-    updateTurn: (gameId: number, coordinateId: number) => requests.put<void>(`/game/turn/${gameId}/${coordinateId}`)
+    updateTurn: (gameId: number, coordinateId: number) => requests.put<void>(`/game/turn/${gameId}/${coordinateId}`),
+    findGame: () => requests.get<void>(`/game/find-game`)
 }
 
 const agent = {

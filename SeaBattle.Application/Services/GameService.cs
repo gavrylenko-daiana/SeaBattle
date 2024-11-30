@@ -122,6 +122,22 @@ public class GameService : IGameService
         return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
+    public async Task<Result> UpdateGameProgress(int id, GameProgress gameProgress)
+    {
+        var game = await _repository.GetById(id);
+        
+        if (game is null)
+        {
+            return Result.Failure(ServiceErrors.GameServiceExceptions.NonExistentGame);
+        }
+
+        game.Progress = gameProgress;
+        await _repository.Update(game);
+        var saveResult = await _unitOfWork.SaveChanges();
+
+        return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+    }
+    
     public async Task<Result> Delete(int id)
     {
         var game = await _repository.GetById(id);
@@ -448,5 +464,94 @@ public class GameService : IGameService
         var saveResult = await _unitOfWork.SaveChanges();
 
         return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+    }
+    
+    public async Task<Result<Game>> FindGame(int userId)
+    {
+        const int ratingRange = 200;
+        const int maxWaitTimeInSeconds = 300; // 5 minutes
+        const int checkIntervalInMilliseconds = 1000; // 1 second
+
+        var userResult = await _userService.GetUserById(userId);
+        if (userResult.IsFailure)
+        {
+            return Result.Failure<Game>(userResult.Error);
+        }
+
+        var user = userResult.Value;
+        user.Status = AppUserStatus.SearchingForGame;
+
+        try
+        {
+            var userRating = user.Rating;
+            var startTime = DateTime.UtcNow;
+
+            while ((DateTime.UtcNow - startTime).TotalSeconds < maxWaitTimeInSeconds)
+            {
+                var games = await _repository.GetAll(
+                    filter: g => g.Progress == GameProgress.PlayerWaiting &&
+                                 g.CreatorId != userId &&
+                                 g.GameUsers.Any(gu => Math.Abs(gu.AppUser.Rating - userRating) <= ratingRange),
+                    include: query => query.Include(g => g.GameUsers)
+                        .ThenInclude(gu => gu.AppUser)
+                );
+
+                var suitableGame = games.FirstOrDefault();
+                if (suitableGame != null)
+                {
+                    return Result.Success(suitableGame);
+                }
+
+                await Task.Delay(checkIntervalInMilliseconds);
+            }
+
+            return Result.Failure<Game>(ServiceErrors.GameServiceExceptions.NoSuitableGame);
+        }
+        finally
+        {
+            user.Status = AppUserStatus.Idle;
+            await _userService.UpdateUser(user);
+        }
+    }
+
+
+    public async Task<Result<Game>> FindOpponent(int gameId)
+    {
+        const int ratingRange = 200;
+        const int maxWaitTimeInSeconds = 300; // 5 minutes
+        const int checkIntervalInMilliseconds = 1000; // 1 second
+
+        var gameResult = await GetById(gameId);
+        if (gameResult.IsFailure)
+        {
+            return Result.Failure<Game>(gameResult.Error);
+        }
+
+        var game = gameResult.Value;
+        var userRating = game.GameUsers.FirstOrDefault()?.AppUser?.Rating;
+
+        if (userRating == null)
+        {
+            return Result.Failure<Game>(ServiceErrors.GameServiceExceptions.UnableToRetrieveUserRating);
+        }
+
+        var startTime = DateTime.UtcNow;
+
+        while ((DateTime.UtcNow - startTime).TotalSeconds < maxWaitTimeInSeconds)
+        {
+            var potentialOpponent = game.GameUsers.FirstOrDefault(gu =>
+                gu.AppUserId != game.CreatorId &&
+                gu.AppUser.Status == AppUserStatus.SearchingForGame && 
+                Math.Abs(gu.AppUser.Rating - userRating.Value) <= ratingRange);
+
+            if (potentialOpponent != null)
+            {
+                return Result.Success(game);
+            }
+
+            await Task.Delay(checkIntervalInMilliseconds);
+        }
+
+        return Result.Failure<Game>(ServiceErrors.GameServiceExceptions.NoSuitableOpponent);
     }
 }

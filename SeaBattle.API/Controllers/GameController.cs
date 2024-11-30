@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,16 @@ public class GameController : BaseApiController
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 1000)
     {
-        return HandleResult(await _gameService.GetAll(pageNumber: pageNumber, pageSize: pageSize));
+        var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        {
+            return BadRequest();
+        }
+
+        Expression<Func<Game, bool>> filter = game => game.CreatorId == userId;
+
+        return HandleResult(await _gameService.GetAll(filter: filter, pageNumber: pageNumber, pageSize: pageSize));
     }
     
     [HttpGet("{id}")]
@@ -176,6 +186,7 @@ public class GameController : BaseApiController
         
         // Check if the game has ended
         var gameResult = await _gameService.GetById(gameId);
+        
         if (gameResult.IsFailure)
         {
             return NotFound();
@@ -204,11 +215,9 @@ public class GameController : BaseApiController
             var (newFirstPlayerRating, newSecondPlayerRating) = EloRatingCalculator.CalculateElo(
                 firstPlayer.Rating, secondPlayer.Rating, firstPlayerWon);
 
-            // Update player ratings
             firstPlayer.Rating = newFirstPlayerRating;
             secondPlayer.Rating = newSecondPlayerRating;
 
-            // Save updates
             var firstPlayerUpdateResult = await _userService.UpdateUser(firstPlayer);
             var secondPlayerUpdateResult = await _userService.UpdateUser(secondPlayer);
 
@@ -243,5 +252,28 @@ public class GameController : BaseApiController
         await _playHubService.CoordinateUpdated(gameId);
         
         return Ok();
+    }
+    
+    [HttpGet("find-game")]
+    public async Task<IActionResult> FindGame()
+    {
+        var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        {
+            return BadRequest();
+        }
+
+        var result = await _gameService.FindGame(userId);
+
+        return result.IsFailure ? NotFound(result.Error) : Ok(result.Value);
+    }
+
+    [HttpGet("find-opponent/{gameId}")]
+    public async Task<IActionResult> FindOpponent(int gameId)
+    {
+        var result = await _gameService.FindOpponent(gameId);
+
+        return result.IsFailure ? NotFound(result.Error) : Ok(result.Value);
     }
 }

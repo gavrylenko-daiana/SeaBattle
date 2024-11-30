@@ -149,6 +149,18 @@ public static class ServiceErrors
         public static Error NonExistentGames => new Error(
             "GameServiceExceptions.NonExistentGames",
             "Game list is empty.");
+        
+        public static Error UnableToRetrieveUserRating => new Error(
+            "GameServiceExceptions.UnableToRetrieveUserRating",
+            "Unable to retrieve user rating.");
+        
+        public static Error NoSuitableGame => new Error(
+            "GameServiceExceptions.NoSuitableGame",
+            "No suitable game found within the time limit.");
+        
+        public static Error NoSuitableOpponent => new Error(
+            "GameServiceExceptions.NoSuitableOpponent",
+            "No suitable opponent found within the time limit.");
     }
 
     public static class GameInvitationServiceExceptions

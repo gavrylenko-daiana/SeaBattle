@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SeaBattle.Domain.Enums;
 using SeaBattle.Domain.Models;
 
 namespace SeaBattle.Persistence;
@@ -31,6 +32,10 @@ public class ApplicationContext : DbContext
         modelBuilder.Entity<AppUser>()
             .Property(u => u.Rating)
             .HasDefaultValue(1000);
+        
+        modelBuilder.Entity<AppUser>()
+            .Property(u => u.Status)
+            .HasDefaultValue(AppUserStatus.Idle);
     
         modelBuilder.Entity<Coordinate>()
             .Property(c => c.CoordinateId)

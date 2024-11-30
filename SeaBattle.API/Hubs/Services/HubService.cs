@@ -22,4 +22,19 @@ public class HubService : IHubService
     {
         await _playHubContext.Clients.All.SendAsync("ReceiveGameListUpdate");
     }
+    
+    public async Task NotifyGameFound(int userId, object game)
+    {
+        await _playHubContext.Clients.User(userId.ToString()).SendAsync("GameFound", game);
+    }
+
+    public async Task NotifyOpponentFound(int userId, object opponent)
+    {
+        await _playHubContext.Clients.User(userId.ToString()).SendAsync("OpponentFound", opponent);
+    }
+
+    public async Task NotifyFailure(int userId, string message)
+    {
+        await _playHubContext.Clients.User(userId.ToString()).SendAsync("SearchFailed", message);
+    }
 }

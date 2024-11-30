@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using SeaBattle.API.DependencyRegistration;
 using SeaBattle.API.Extensions;
+using SeaBattle.API.Hubs;
 using SeaBattle.API.JWT;
 using SeaBattle.API.Middlewares;
 

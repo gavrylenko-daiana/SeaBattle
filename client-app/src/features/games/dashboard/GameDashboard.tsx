@@ -1,6 +1,6 @@
 import {useEffect} from "react";
 import {observer} from "mobx-react-lite";
-import {Grid} from "semantic-ui-react";
+import {Button, Grid} from "semantic-ui-react";
 import GameList from "./GameList.tsx";
 import LoadingComponent from "../../../app/layout/LoadingComponent.tsx";
 import {useStore} from "../../../app/stores/store.ts";
@@ -29,6 +29,7 @@ const GameDashboard = observer(() => {
     return (
         <Grid>
             <Grid.Column width='16'>
+                <Button color="green" loading={gameStore.isFindRatedGameLoading} onClick={() => gameStore.findGame()}>Find Rated Game</Button>
                 <GameList/>
             </Grid.Column>
         </Grid>

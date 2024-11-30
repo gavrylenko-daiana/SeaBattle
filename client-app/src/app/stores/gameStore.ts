@@ -5,6 +5,7 @@ import {GameFormValues} from "../models/gameFormValues.ts";
 import {store} from "./store.ts";
 import {ShipFormValues} from "../models/shipFormValues.ts";
 import {HubConnection, HubConnectionBuilder, LogLevel} from "@microsoft/signalr";
+import {router} from "../router/Routes.tsx";
 
 export default class GameStore {
     gameRegistry: Game[] = [];
@@ -12,6 +13,8 @@ export default class GameStore {
     loadingInitial = false;
     selectedShipSize: number | null = null;
     hubConnection: HubConnection | null = null;
+    isFindRatedGameLoading: boolean = false;
+    findOpponentLoadingGameIds: number[] = [];
 
     constructor() {
         makeAutoObservable(this)
@@ -22,7 +25,7 @@ export default class GameStore {
 
         if (token) {
             this.hubConnection = new HubConnectionBuilder()
-                .withUrl(import.meta.env.VITE_PLAY_URL + '?gameId=' + gameId, {
+                .withUrl(import.meta.env.VITE_PLAY_URL + '?gameId=' + gameId + '&userId=' + store.userStore.user?.appUserId, {
                     accessTokenFactory: () => token
                 })
                 .withAutomaticReconnect()
@@ -39,10 +42,54 @@ export default class GameStore {
                 this.setLoadingInitial(true);
                 this.loadGames();
             });
+
+            this.hubConnection.on('GameFound', async (game: Game) => {
+                this.setIsFindRatedGameLoading(false);
+                // runInAction(() => {
+                //     this.setGame(game);
+                //     this.selectedGame = game;
+                // });
+                // await this.joinGame(game.gameId);
+                await router.navigate(`/game/${game.gameId}`);
+            });
+
+            this.hubConnection.on('OpponentFound', async (game: Game) => {
+                // debugger;
+                this.setIsFindOpponentLoading(game.gameId, false);
+                // runInAction(() => {
+                //     this.setGame(game);
+                //     this.selectedGame = game;
+                // });
+                await router.navigate(`/game/${game.gameId}`);
+            });
+
+            this.hubConnection.on('SearchFailed', (message: string) => {
+                this.clearIsFindOpponentLoading();
+                this.setIsFindRatedGameLoading(false);
+                console.error('Search failed: ', message);
+            });
         } else {
             console.error("Token is not available. Cannot establish hub connection.");
         }
     }
+
+    findGame = async () => {
+        const userId = store.userStore.user?.appUserId;
+        if (userId) {
+            this.hubConnection?.invoke('FindGame', userId)
+                .catch(error => console.error('Error invoking FindGame: ', error));
+            this.setIsFindRatedGameLoading(true);
+        }
+    };
+
+    findOpponent = async (gameId: number) => {
+        const userId = store.userStore.user?.appUserId;
+        if (userId) {
+            this.hubConnection?.invoke('FindOpponent', gameId, userId)
+                .catch(error => console.error('Error invoking FindOpponent: ', error));
+            this.setIsFindOpponentLoading(gameId, true);
+        }
+    };
 
     stopHubConnection = () => {
         this.hubConnection?.stop().catch(error => console.log('Error stopping connection: ', error));
@@ -121,6 +168,28 @@ export default class GameStore {
             });
         }
     }
+
+    // findRatedGame = async () => {
+    //     this.setIsFindRatedGameLoading(true);
+    //     try {
+    //         await agent.Games.findGame();
+    //         runInAction(() => {
+    //             // const index = this.gameRegistry.findIndex(game => game.gameId === id);
+    //             // if (index !== -1) {
+    //             //     this.gameRegistry.splice(index, 1);
+    //             // }
+    //             // if (this.selectedGame?.gameId === id) {
+    //             //     this.selectedGame = undefined;
+    //             // }
+    //             this.setIsFindRatedGameLoading(false);
+    //         });
+    //     } catch (error) {
+    //         console.log(error);
+    //         runInAction(() => {
+    //             this.setIsFindRatedGameLoading(false);
+    //         });
+    //     }
+    // }
 
     updateGame = async (game: GameFormValues) => {
         try {
@@ -242,5 +311,22 @@ export default class GameStore {
 
     clearSelectedShipSize = () => {
         this.selectedShipSize = null;
+    }
+
+    setIsFindRatedGameLoading = (state: boolean) => {
+        this.isFindRatedGameLoading = state;
+    }
+
+    setIsFindOpponentLoading = (gameId: number, state: boolean) => {
+        if (state) {
+            this.findOpponentLoadingGameIds.push(gameId)
+        } else {
+            const index = this.findOpponentLoadingGameIds.indexOf(gameId);
+            this.findOpponentLoadingGameIds.splice(index, 1);
+        }
+    }
+
+    clearIsFindOpponentLoading = () => {
+        this.findOpponentLoadingGameIds = [];
     }
 }

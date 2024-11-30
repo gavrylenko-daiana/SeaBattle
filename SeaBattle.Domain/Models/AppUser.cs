@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
+using SeaBattle.Domain.Enums;
 
 namespace SeaBattle.Domain.Models;
 
@@ -29,6 +30,9 @@ public class AppUser
     [Column("Rating")]
     public int Rating { get; set; } = 1000; // Default initial rating
     
+    [Column("Status")]
+    public AppUserStatus Status { get; set; } = AppUserStatus.Idle;
+
     [JsonIgnore]
     public List<UserGames> UserGames { get; set; } = new List<UserGames>();
 }
