@@ -6,6 +6,7 @@ import {store} from "./store.ts";
 import {ShipFormValues} from "../models/shipFormValues.ts";
 import {HubConnection, HubConnectionBuilder, LogLevel} from "@microsoft/signalr";
 import {router} from "../router/Routes.tsx";
+import toast from "react-hot-toast";
 
 export default class GameStore {
     gameRegistry: Game[] = [];
@@ -253,6 +254,7 @@ export default class GameStore {
             await this.loadGame(ship.gameId!);
             this.setLoadingInitial(false);
         } catch (error) {
+            toast.error("Ship is outside of bounds or cells already occupied!");
             console.error('Cannot add ship to the game field to game:', error);
             this.setLoadingInitial(false);
         }

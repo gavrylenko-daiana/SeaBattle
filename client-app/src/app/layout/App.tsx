@@ -8,6 +8,7 @@ import {useStore} from "../stores/store.ts";
 import {useEffect} from "react";
 import LoadingComponent from "./LoadingComponent.tsx";
 import ModalContainer from "../common/modals/ModalContainer.tsx";
+import {Toaster} from "react-hot-toast";
 
 function App() {
     const location = useLocation();
@@ -27,6 +28,7 @@ function App() {
 
     return (
         <>
+            <Toaster />
             <ModalContainer />
             {location.pathname === '/' ? <HomePage /> : (
                 <>

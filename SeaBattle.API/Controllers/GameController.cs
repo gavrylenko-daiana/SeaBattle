@@ -37,7 +37,8 @@ public class GameController : BaseApiController
             return BadRequest();
         }
 
-        Expression<Func<Game, bool>> filter = game => game.CreatorId == userId;
+        Expression<Func<Game, bool>> filter = game =>
+            game.CreatorId == userId || game.GameUsers.Any(gu => gu.AppUserId == userId);
 
         return HandleResult(await _gameService.GetAll(filter: filter, pageNumber: pageNumber, pageSize: pageSize));
     }
@@ -154,7 +155,7 @@ public class GameController : BaseApiController
         
         var result = await _gameService.AddShipToField(shipDto, userId);
 
-        return result.IsFailure ? NotFound() : Ok();
+        return result.IsFailure ? BadRequest(result.Error.Message) : Ok();
     }
 
     [HttpPatch("ready/{gameId}")]
