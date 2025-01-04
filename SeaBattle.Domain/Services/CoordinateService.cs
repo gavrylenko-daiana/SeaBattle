@@ -31,7 +31,7 @@ public class CoordinateService : ICoordinateService
         }
 
         var adjacentCoordinates =
-            _computeCoordinateService.GetAdjacentCoordinatesForShip(shipCoordinates.Value, direction, gameField);
+            _computeCoordinateService.GetAdjacentCoordinatesForShip(shipCoordinates.Value, direction, gameField, true);
 
         if (adjacentCoordinates.IsFailure)
         {

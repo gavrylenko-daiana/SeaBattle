@@ -6,8 +6,7 @@ namespace SeaBattle.Domain.Interfaces;
 
 public interface IComputeCoordinateService
 {
-    Result<List<Coordinate>> GetAdjacentCoordinatesForShip(List<Coordinate> shipCoordinates, Direction shipDirection,
-        GameField gameField);
+    Result<List<Coordinate>> GetAdjacentCoordinatesForShip(List<Coordinate> shipCoordinates, Direction shipDirection, GameField gameField, bool isPreparation = false);
 
     Coordinate GetNextCoordinate(Coordinate coordinate, Direction direction, GameField gameField, int shipSize = 1);
 }

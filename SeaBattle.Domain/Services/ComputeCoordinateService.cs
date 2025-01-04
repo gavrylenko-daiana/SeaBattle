@@ -14,9 +14,14 @@ public class ComputeCoordinateService : IComputeCoordinateService
         _validationService = validationService;
     }
     
-    public Result<List<Coordinate>> GetAdjacentCoordinatesForShip(List<Coordinate> shipCoordinates, Direction shipDirection, GameField gameField)
+    public Result<List<Coordinate>> GetAdjacentCoordinatesForShip(List<Coordinate> shipCoordinates, Direction shipDirection, GameField gameField, bool isPreparation = false)
     {
         var allAdjacentCoordinates = new List<Coordinate>();
+        
+        if (!isPreparation && shipDirection is Direction.Down or Direction.Left)
+        {
+            shipCoordinates.Reverse();
+        }
 
         for (int i = 0; i < shipCoordinates.Count; i++)
         {
