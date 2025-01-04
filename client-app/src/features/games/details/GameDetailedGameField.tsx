@@ -60,6 +60,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
         }
 
         const currentPlayerTurn = game.gameUsers.filter(gu => gu.isPlayerTurn).some(gu => gu.appUserId === userId);
+        const isEmptyCoordinate = coordinate.coordinateType.coordinateTypeId == 1 || coordinate.coordinateType.coordinateTypeId == 2;
 
         if (selectedShipSize && coordinate.coordinateType.type === "Empty") {
             const shipFormContent = (
@@ -71,7 +72,7 @@ const GameDetailedGameField = observer(({userId, selectedShipSize, isVisible, is
             modalStore.openModal(shipFormContent);
         }
 
-        if (!isPreparation && !isVisible && currentPlayerTurn) {
+        if (!isPreparation && !isVisible && currentPlayerTurn && isEmptyCoordinate) {
             await gameStore.updateCoordinateType(game.gameId, coordinate.coordinateId);
             await gameStore.updateTurn(game.gameId, coordinate.coordinateId);
         }

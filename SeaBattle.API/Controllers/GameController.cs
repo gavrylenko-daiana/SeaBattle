@@ -17,14 +17,12 @@ public class GameController : BaseApiController
     private readonly IGameService _gameService;
     private readonly IHubService _playHubService;
     private readonly IAppUserService _userService;
-    private readonly IUnitOfWork _unitOfWork;
 
-    public GameController(IGameService gameService, IHubService playHubService, IAppUserService userService, IUnitOfWork unitOfWork)
+    public GameController(IGameService gameService, IHubService playHubService, IAppUserService userService)
     {
         _gameService = gameService;
         _playHubService = playHubService;
         _userService = userService;
-        _unitOfWork = unitOfWork;
     }
 
     [HttpGet]
