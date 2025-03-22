@@ -17,7 +17,7 @@ public class CoordinateTypeService : ICoordinateTypeService
     
     public async Task<Result<CoordinateType>> GetCoordinateTypeByTypeNameAsync(string typeName)
     {
-        var coordinateType = (await _repository.GetAll()).FirstOrDefault(ct => ct.Type == typeName);
+        var coordinateType = (await _repository.GetAll()).FirstOrDefault(ct => String.Equals(ct.Type, typeName, StringComparison.CurrentCultureIgnoreCase));
 
         if (coordinateType is null)
         {

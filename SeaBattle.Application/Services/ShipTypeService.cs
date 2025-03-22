@@ -17,7 +17,7 @@ public class ShipTypeService : IShipTypeService
     
     public async Task<Result<ShipType>> GetShipTypeByTypeNameAsync(string typeName)
     {
-        var coordinateType = (await _repository.GetAll()).FirstOrDefault(ct => ct.Type.ToLower() == typeName);
+        var coordinateType = (await _repository.GetAll()).FirstOrDefault(ct => String.Equals(ct.Type, typeName, StringComparison.CurrentCultureIgnoreCase));
 
         if (coordinateType is null)
         {

@@ -76,6 +76,12 @@ const GameDetailedShips = observer(({game, userId}: Props) => {
         <div className="ships-container">
             {renderShips()}
             <div className="ship-detail">
+                <Button
+                    onClick={() => gameStore.autoPlaceShips(game.gameId)}
+                    color="purple"
+                    floated="right"
+                    content="Auto Place Ships"
+                />
                 {shipsLeft[1] === 0 && shipsLeft[2] === 0 && shipsLeft[3] === 0 && shipsLeft[4] === 0 &&
                     (
                         currentUserGame.isReady ?

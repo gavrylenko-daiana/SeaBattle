@@ -7,7 +7,7 @@ using SeaBattle.Domain.Enums;
 using SeaBattle.Domain.Interfaces;
 using SeaBattle.Domain.Models;
 using SeaBattle.Domain.Models.Dto;
-using SeaBattle.Domain.Models.Errors;
+using SeaBattle.Domain.Interfaces;
 using SeaBattle.Domain.Models.Results;
 using ICoordinateService = SeaBattle.Application.Interfaces.ICoordinateService;
 using IGameFieldService = SeaBattle.Application.Interfaces.IGameFieldService;
@@ -26,10 +26,18 @@ public class GameService : IGameService
     private readonly IShipCoordinateService _shipCoordinateService;
     private readonly ICoordinateTypeService _coordinateTypeService;
     private readonly IGameFieldService _gameFieldService;
+    private readonly IShipTypeService _shipTypeService;
+    private readonly SeaBattle.Domain.Interfaces.ICoordinateService _computeCoordinateService;
+    private readonly IComputeCoordinateService _computeCoordinate;
+    private readonly IValidationService _validationService;
 
     public GameService(IRepository<Game> repository, IUnitOfWork unitOfWork, IUserGameService userGameService,
-        IAppUserService userService, IGameInvitationService invitationService, IShipService shipService, ICoordinateService coordinateService,
-        IShipCoordinateService shipCoordinateService, IGameFieldService gameFieldService, ICoordinateTypeService coordinateTypeService)
+        IAppUserService userService, IGameInvitationService invitationService, IShipService shipService,
+        ICoordinateService coordinateService,
+        IShipCoordinateService shipCoordinateService, IGameFieldService gameFieldService,
+        ICoordinateTypeService coordinateTypeService,
+        IShipTypeService shipTypeService, SeaBattle.Domain.Interfaces.ICoordinateService computeCoordinateService,
+        IComputeCoordinateService computeCoordinate, IValidationService validationService)
     {
         _unitOfWork = unitOfWork;
         _userGameService = userGameService;
@@ -40,10 +48,16 @@ public class GameService : IGameService
         _shipCoordinateService = shipCoordinateService;
         _gameFieldService = gameFieldService;
         _coordinateTypeService = coordinateTypeService;
+        _shipTypeService = shipTypeService;
+        _computeCoordinateService = computeCoordinateService;
+        _computeCoordinate = computeCoordinate;
+        _validationService = validationService;
         _repository = repository;
     }
 
-    public async Task<Result<List<Game>>> GetAll(Expression<Func<Game, bool>> filter = null!, Expression<Func<IQueryable<Game>, IOrderedQueryable<Game>>> orderBy = null!, int pageNumber = 1, int pageSize = 1000)
+    public async Task<Result<List<Game>>> GetAll(Expression<Func<Game, bool>> filter = null!,
+        Expression<Func<IQueryable<Game>, IOrderedQueryable<Game>>> orderBy = null!, int pageNumber = 1,
+        int pageSize = 1000)
     {
         Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
             .Include(g => g.GameUsers)
@@ -53,33 +67,35 @@ public class GameService : IGameService
 
         var paginatedGames = games.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
-        return paginatedGames.Any() 
-            ? Result.Success(paginatedGames) 
+        return paginatedGames.Any()
+            ? Result.Success(paginatedGames)
             : Result.Failure<List<Game>>(ServiceErrors.GameServiceExceptions.NonExistentGames);
     }
-    
+
     public async Task<Result<Game>> GetById(int id)
     {
         Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
             .Include(g => g.GameUsers)
-                .ThenInclude(ug => ug.GameField)
-                .ThenInclude(gf => gf.Coordinates)
-                .ThenInclude(c => c.Point)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.Point)
             .Include(g => g.GameUsers)
-                .ThenInclude(ug => ug.GameField)
-                .ThenInclude(gf => gf.Coordinates)
-                .ThenInclude(c => c.CoordinateType)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.CoordinateType)
             .Include(g => g.GameUsers)
-                .ThenInclude(ug => ug.GameField)
-                .ThenInclude(gf => gf.Coordinates)
-                .ThenInclude(c => c.ShipCoordinates)
-                .ThenInclude(sc => sc.Ship)
+            .ThenInclude(ug => ug.GameField)
+            .ThenInclude(gf => gf.Coordinates)
+            .ThenInclude(c => c.ShipCoordinates)
+            .ThenInclude(sc => sc.Ship)
             .Include(g => g.GameUsers)
-                .ThenInclude(gu => gu.AppUser);
+            .ThenInclude(gu => gu.AppUser);
 
         var game = await _repository.GetById(id, include);
 
-        return game is null ? Result.Failure<Game>(ServiceErrors.GameServiceExceptions.NonExistentGame) : Result.Success(game);
+        return game is null
+            ? Result.Failure<Game>(ServiceErrors.GameServiceExceptions.NonExistentGame)
+            : Result.Success(game);
     }
 
     public async Task<Result<Game>> Insert(GameDto gameDto)
@@ -92,13 +108,13 @@ public class GameService : IGameService
         }
 
         var game = new Game(gameDto.Name, gameDto.CreatorId!.Value);
-        
+
         await _repository.Insert(game);
 
         var save = await _unitOfWork.SaveChanges();
-        
+
         var userGameResult = await _userGameService.Insert(game, currentUserResult.Value);
-        
+
         if (userGameResult.IsFailure)
         {
             return Result.Failure<Game>(userGameResult.Error);
@@ -106,7 +122,9 @@ public class GameService : IGameService
 
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success(game) : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success(game)
+            : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result> Update(int id, GameDto gameDto)
@@ -119,13 +137,15 @@ public class GameService : IGameService
         await _repository.Update(createGameResult);
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success()
+            : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result> UpdateGameProgress(int id, GameProgress gameProgress)
     {
         var game = await _repository.GetById(id);
-        
+
         if (game is null)
         {
             return Result.Failure(ServiceErrors.GameServiceExceptions.NonExistentGame);
@@ -135,9 +155,11 @@ public class GameService : IGameService
         await _repository.Update(game);
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success()
+            : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
-    
+
     public async Task<Result> Delete(int id)
     {
         var game = await _repository.GetById(id);
@@ -146,7 +168,7 @@ public class GameService : IGameService
         {
             return Result.Failure(ServiceErrors.GameServiceExceptions.NonExistentGame);
         }
-        
+
         var invitations = await _invitationService.GetAll();
 
         if (!invitations.IsFailure)
@@ -154,11 +176,13 @@ public class GameService : IGameService
             var invitationsCurrentGame = invitations.Value.Where(i => i.GameId == id).ToList();
             game.GameInvitations = invitationsCurrentGame;
         }
-        
+
         await _repository.Delete(game);
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success()
+            : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result<Game>> Join(int gameId, int currentUserId)
@@ -199,7 +223,9 @@ public class GameService : IGameService
         await _repository.Update(game);
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success(game) : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success(game)
+            : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result<GameInvitation>> InviteUser(int gameId, int userId)
@@ -227,7 +253,9 @@ public class GameService : IGameService
 
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success(invitationResult.Value) : Result.Failure<GameInvitation>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success(invitationResult.Value)
+            : Result.Failure<GameInvitation>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result<Game>> AcceptInvitation(int gameId, int userId)
@@ -275,7 +303,7 @@ public class GameService : IGameService
         {
             return Result.Failure<Game>(getShipResult.Error);
         }
-        
+
         await _unitOfWork.SaveChanges();
 
         var getCoordinateResult = await _coordinateService.GetById(shipDto.CoordinateId);
@@ -291,7 +319,7 @@ public class GameService : IGameService
         {
             return Result.Failure<Game>(ServiceErrors.UserGameFieldServiceExceptions.NonExistentUserGame);
         }
-        
+
         var ship = getShipResult.Value;
 
         if (ship is null)
@@ -299,7 +327,9 @@ public class GameService : IGameService
             return Result.Failure<Game>(ServiceErrors.ShipServiceExceptions.NonExistentShip);
         }
 
-        var result = await _shipCoordinateService.AddShipToGameField(ship, userGame.GameField, getCoordinateResult.Value, shipDto);
+        var result =
+            await _shipCoordinateService.AddShipToGameField(ship, userGame.GameField, getCoordinateResult.Value,
+                shipDto);
 
         if (result.IsFailure)
         {
@@ -311,7 +341,172 @@ public class GameService : IGameService
 
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success(getGameResult.Value) : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success(getGameResult.Value)
+            : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+    }
+
+    public async Task<Result<Game>> PlaceShipsAutomatically(int gameId, int userId)
+    {
+        var getGameResult = await GetById(gameId);
+
+        if (getGameResult.IsFailure)
+        {
+            return Result.Failure<Game>(getGameResult.Error);
+        }
+
+        var game = getGameResult.Value;
+        var userGame = game.GameUsers.FirstOrDefault(gu => gu.AppUserId == userId);
+
+        if (userGame?.GameField is null)
+        {
+            return Result.Failure<Game>(ServiceErrors.UserGameFieldServiceExceptions.NonExistentUserGame);
+        }
+
+        var gameField = userGame.GameField;
+
+        await ClearShipsFromField(gameField);
+        await _unitOfWork.SaveChanges();
+
+        var shipSizes = new List<int> { 4, 3, 3, 2, 2, 2, 1, 1, 1, 1 };
+        int maxAttempts = 3; // Number of placement attempts per ship
+        int maxResets = 5; // Number of times to reset the entire board and try again
+
+        for (int resetCount = 0; resetCount < maxResets; resetCount++)
+        {
+            bool allShipsPlaced = true;
+
+            if (resetCount > 0)
+            {
+                await ClearShipsFromField(gameField);
+                await _unitOfWork.SaveChanges();
+            }
+
+            foreach (var size in shipSizes)
+            {
+                bool shipPlaced = false;
+
+                for (int attempt = 0; attempt < maxAttempts; attempt++)
+                {
+                    var placementResult = await TryPlaceShipBFS(size, gameField, userId, gameId);
+
+                    if (!placementResult.IsFailure)
+                    {
+                        shipPlaced = true;
+                        await _unitOfWork.SaveChanges();
+                        break;
+                    }
+                }
+
+                if (!shipPlaced)
+                {
+                    allShipsPlaced = false;
+                    break;
+                }
+            }
+
+            if (allShipsPlaced)
+            {
+                return Result.Success(game);
+            }
+        }
+
+        await ClearShipsFromField(gameField);
+        await _unitOfWork.SaveChanges();
+        
+        return Result.Failure<Game>(ServiceErrors.GameFieldServiceExceptions.NoValidPlacement);
+    }
+
+    private async Task ClearShipsFromField(GameField gameField)
+    {
+        var emptyTypeResult = await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Empty");
+        if (emptyTypeResult.IsFailure)
+        {
+            return;
+        }
+
+        foreach (var coordinate in gameField.Coordinates)
+        {
+            coordinate.ShipCoordinates.Clear();
+
+            coordinate.MarkCoordinateType(emptyTypeResult.Value);
+        }
+
+        await _unitOfWork.SaveChanges();
+    }
+
+    private async Task<Result> TryPlaceShipBFS(int shipSize, GameField gameField, int userId, int gameId)
+    {
+        var directions = Enum.GetValues(typeof(Direction)).Cast<Direction>().ToList();
+        var random = new Random();
+
+        var startCoordinates = gameField.Coordinates
+            .Where(c => c.CoordinateType.Type == "Empty")
+            .OrderBy(_ => random.Next())
+            .ToList();
+
+        var queue = new Queue<Coordinate>(startCoordinates);
+
+        while (queue.Count > 0)
+        {
+            var startCoordinate = queue.Dequeue();
+
+            foreach (var direction in directions.OrderBy(_ => random.Next()))
+            {
+                var shipTypeResult = await _shipTypeService.GetShipTypeByTypeNameAsync("war");
+                
+                if (shipTypeResult.IsFailure)
+                {
+                    continue;
+                }
+
+                var emptyTypeResult = await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Empty");
+                if (emptyTypeResult.IsFailure)
+                {
+                    continue;
+                }
+
+                var currentCoordinate = startCoordinate;
+                var shipCoordinates = new List<Coordinate>();
+                bool validPlacement = true;
+
+                for (int i = 0; i < shipSize; i++)
+                {
+                    if (currentCoordinate == null ||
+                        !_validationService.IsValidPoint(currentCoordinate.Point) ||
+                        currentCoordinate.CoordinateType.Type != "Empty")
+                    {
+                        validPlacement = false;
+                        break;
+                    }
+
+                    shipCoordinates.Add(currentCoordinate);
+                    currentCoordinate = _computeCoordinate.GetNextCoordinate(currentCoordinate, direction, gameField);
+                }
+
+                if (!validPlacement)
+                {
+                    continue;
+                }
+
+                var shipDto = new ShipDto
+                {
+                    GameId = gameId,
+                    CoordinateId = startCoordinate.CoordinateId,
+                    Size = shipSize,
+                    Direction = direction.ToString()
+                };
+
+                var addShipResult = await AddShipToField(shipDto, userId);
+                
+                if (!addShipResult.IsFailure)
+                {
+                    return Result.Success();
+                }
+            }
+        }
+
+        return Result.Failure(ServiceErrors.GameFieldServiceExceptions.NoValidPlacement);
     }
 
     public async Task<Result<Game>> UpdateUserStatusOnReady(int gameId, int userId)
@@ -330,7 +525,7 @@ public class GameService : IGameService
             .ThenInclude(gf => gf.Coordinates)
             .ThenInclude(c => c.ShipCoordinates)
             .ThenInclude(sc => sc.Ship);
-        
+
         var game = await _repository.GetById(gameId, include);
 
         if (game is null)
@@ -344,7 +539,7 @@ public class GameService : IGameService
         {
             return Result.Failure<Game>(ServiceErrors.UserGameFieldServiceExceptions.NonExistentUserGame);
         }
-        
+
         userGame.IsReady = true;
 
         var userGameWithoutCurrentUser = game.GameUsers.FirstOrDefault(ug => ug.AppUserId != userId);
@@ -362,7 +557,9 @@ public class GameService : IGameService
         await _userGameService.Update(userGame);
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success(game) : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success(game)
+            : Result.Failure<Game>(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
 
     public async Task<Result<Coordinate>> UpdateCoordinateType(int coordinateId)
@@ -382,10 +579,11 @@ public class GameService : IGameService
             if (await _shipCoordinateService.AreShipCoordinatesHits(coordinate))
             {
                 var destroyedTypeResult = await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Destroyed");
-                
+
                 if (destroyedTypeResult.IsFailure)
                 {
-                    return Result.Failure<Coordinate>(ServiceErrors.CoordinateTypeServiceExceptions.CoordinateTypeNotFound);
+                    return Result.Failure<Coordinate>(ServiceErrors.CoordinateTypeServiceExceptions
+                        .CoordinateTypeNotFound);
                 }
 
                 coordinate.MarkCoordinateType(destroyedTypeResult.Value);
@@ -395,7 +593,8 @@ public class GameService : IGameService
                 var hitTypeResult = await _coordinateTypeService.GetCoordinateTypeByTypeNameAsync("Hit");
                 if (hitTypeResult.IsFailure)
                 {
-                    return Result.Failure<Coordinate>(ServiceErrors.CoordinateTypeServiceExceptions.CoordinateTypeNotFound);
+                    return Result.Failure<Coordinate>(ServiceErrors.CoordinateTypeServiceExceptions
+                        .CoordinateTypeNotFound);
                 }
 
                 coordinate.MarkCoordinateType(hitTypeResult.Value);
@@ -427,7 +626,7 @@ public class GameService : IGameService
         Func<IQueryable<Game>, IIncludableQueryable<Game, object>> include = query => query
             .Include(g => g.GameUsers)
             .ThenInclude(gu => gu.AppUser);
-        
+
         var game = await _repository.GetById(gameId, include);
 
         if (game is null)
@@ -463,9 +662,11 @@ public class GameService : IGameService
 
         var saveResult = await _unitOfWork.SaveChanges();
 
-        return saveResult ? Result.Success() : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
+        return saveResult
+            ? Result.Success()
+            : Result.Failure(ServiceErrors.UnitOfWorkExceptions.ImpossibleCommitChanges);
     }
-    
+
     public async Task<Result<Game>> FindGame(int userId)
     {
         const int ratingRange = 200;
@@ -541,7 +742,7 @@ public class GameService : IGameService
         {
             var potentialOpponent = game.GameUsers.FirstOrDefault(gu =>
                 gu.AppUserId != game.CreatorId &&
-                gu.AppUser.Status == AppUserStatus.SearchingForGame && 
+                gu.AppUser.Status == AppUserStatus.SearchingForGame &&
                 Math.Abs(gu.AppUser.Rating - userRating.Value) <= ratingRange);
 
             if (potentialOpponent != null)

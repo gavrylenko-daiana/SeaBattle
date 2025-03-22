@@ -119,6 +119,10 @@ public static class ServiceErrors
         public static Error NonExistentGameField => new Error(
             "GameFieldServiceExceptions.NonExistentGameField",
             "Such game field does not exist.");
+        
+        public static Error NoValidPlacement => new Error(
+            "GameFieldServiceExceptions.NoValidPlacement",
+            "There is no suitable place for the ship.");
     }
     
     public static class UserGameFieldServiceExceptions

@@ -57,6 +57,7 @@ const Games = {
     invite: (gameInvitation: { gameId: number; userId: number | undefined }) => requests.post<GameInvitation>(`/game/${gameInvitation.gameId}/invite/${gameInvitation.userId}`, gameInvitation),
     accept: (id: number) => requests.post<Game>(`/game/accept/${id}`),
     addShipToField: (ship: ShipFormValues) => requests.put<void>(`/game/add/${ship.gameId}`, ship),
+    autoPlaceShips: (id: number) => requests.post<void>(`/game/place-ships/${id}`),
     setPlayerStatusGameAsReady: (id: number) => requests.patch<void>(`/game/ready/${id}`),
     updateCoordinateType: (gameId: number, coordinateId: number) => requests.put<void>(`/game/type/${coordinateId}/${gameId}`),
     updateTurn: (gameId: number, coordinateId: number) => requests.put<void>(`/game/turn/${gameId}/${coordinateId}`),

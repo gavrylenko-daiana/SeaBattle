@@ -18,6 +18,7 @@ public interface IGameService
     Task<Result<GameInvitation>> InviteUser(int gameId, int userId);
     Task<Result<Game>> AcceptInvitation(int gameId, int userId);
     Task<Result<Game>> AddShipToField(ShipDto shipDto, int userId);
+    Task<Result<Game>> PlaceShipsAutomatically(int gameId, int userId);
     Task<Result<Game>> UpdateUserStatusOnReady(int gameId, int userId);
     Task<Result<Coordinate>> UpdateCoordinateType(int coordinateId);
     Task<Result> UpdatePlayerTurn(int gameId, int coordinateId, int userId);

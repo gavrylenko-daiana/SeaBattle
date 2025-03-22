@@ -155,7 +155,22 @@ public class GameController : BaseApiController
 
         return result.IsFailure ? BadRequest(result.Error.Message) : Ok();
     }
+    
+    [HttpPost("place-ships/{gameId}")]
+    public async Task<IActionResult> AutoPlaceShips(int gameId)
+    {
+        var userIdClaim = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
+        if (string.IsNullOrWhiteSpace(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+        {
+            return BadRequest();
+        }
+
+        var result = await _gameService.PlaceShipsAutomatically(gameId, userId);
+
+        return result.IsFailure ? BadRequest(result.Error.Message) : Ok();
+    }
+    
     [HttpPatch("ready/{gameId}")]
     public async Task<IActionResult> SetPlayerStatusGameAsReady(int gameId)
     {
@@ -183,7 +198,6 @@ public class GameController : BaseApiController
             return NotFound();
         }
         
-        // Check if the game has ended
         var gameResult = await _gameService.GetById(gameId);
         
         if (gameResult.IsFailure)

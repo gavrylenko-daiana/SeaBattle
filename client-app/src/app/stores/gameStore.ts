@@ -46,21 +46,11 @@ export default class GameStore {
 
             this.hubConnection.on('GameFound', async (game: Game) => {
                 this.setIsFindRatedGameLoading(false);
-                // runInAction(() => {
-                //     this.setGame(game);
-                //     this.selectedGame = game;
-                // });
-                // await this.joinGame(game.gameId);
                 await router.navigate(`/game/${game.gameId}`);
             });
 
             this.hubConnection.on('OpponentFound', async (game: Game) => {
-                // debugger;
                 this.setIsFindOpponentLoading(game.gameId, false);
-                // runInAction(() => {
-                //     this.setGame(game);
-                //     this.selectedGame = game;
-                // });
                 await router.navigate(`/game/${game.gameId}`);
             });
 
@@ -170,28 +160,6 @@ export default class GameStore {
         }
     }
 
-    // findRatedGame = async () => {
-    //     this.setIsFindRatedGameLoading(true);
-    //     try {
-    //         await agent.Games.findGame();
-    //         runInAction(() => {
-    //             // const index = this.gameRegistry.findIndex(game => game.gameId === id);
-    //             // if (index !== -1) {
-    //             //     this.gameRegistry.splice(index, 1);
-    //             // }
-    //             // if (this.selectedGame?.gameId === id) {
-    //             //     this.selectedGame = undefined;
-    //             // }
-    //             this.setIsFindRatedGameLoading(false);
-    //         });
-    //     } catch (error) {
-    //         console.log(error);
-    //         runInAction(() => {
-    //             this.setIsFindRatedGameLoading(false);
-    //         });
-    //     }
-    // }
-
     updateGame = async (game: GameFormValues) => {
         try {
             await agent.Games.update(game);
@@ -259,6 +227,20 @@ export default class GameStore {
             this.setLoadingInitial(false);
         }
     }
+
+    autoPlaceShips = async (gameId: number) => {
+        this.setLoadingInitial(true);
+        try {
+            await agent.Games.autoPlaceShips(gameId);
+            await this.loadGame(gameId);
+            toast.success("Ships placed successfully!");
+        } catch (error) {
+            toast.error("Failed to auto-place ships.");
+            console.error("Error auto-placing ships:", error);
+        } finally {
+            this.setLoadingInitial(false);
+        }
+    };
 
     updateUserStatusGame = async (gameId: number) => {
         try {
